@@ -43,6 +43,7 @@ jobs:
            -requireAdmin `
            -noOutput `
            -noError `
+           -noConsole `
            -description "Unlock 120 FPS for Honkai: Star Rail" `
            -title "HSR FPS Unlocker" `
            -version "$cleanVersion" `
