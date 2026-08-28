@@ -4,9 +4,8 @@ $ErrorActionPreference = 'Stop'
 # Compatible script directory determination
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
 
-# Define target paths
-$unlockerFolder = Join-Path -Path $scriptDir -ChildPath "FPS_Unlocker"
-$jsonPath = Join-Path -Path $unlockerFolder -ChildPath "setting.json"
+# Define target paths (directly in script directory)
+$jsonPath = Join-Path -Path $scriptDir -ChildPath "setting.json"
 
 $registryPath = "HKCU:\Software\Cognosphere\Star Rail"
 $valueName = "GraphicsSettings_Model_h2986158309"
@@ -68,9 +67,6 @@ else {
     if ($fileDialog.ShowDialog() -eq $true) {
         $exePath = $fileDialog.FileName
         $gameDir = [System.IO.Path]::GetDirectoryName($exePath)
-
-        # Ensure FPS_Unlocker folder exists
-        $null = New-Item -Path $unlockerFolder -ItemType Directory -Force
 
         # Create settings object
         $settingsData = [PSCustomObject]@{
