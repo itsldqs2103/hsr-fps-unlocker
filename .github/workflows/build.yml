@@ -1,0 +1,64 @@
+name: Build and Release Zip with Tag in Filename
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers on version tags like v1.0, v1.0.0
+
+permissions:
+  contents: write # Required permissions to upload release assets
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install PS2EXE Module
+        shell: powershell
+        run: |
+          Install-Module -Name ps2exe -Force -Scope CurrentUser
+
+      - name: Convert PS1 to EXE and Compress
+        shell: powershell
+        run: |
+          $tag = "${{ github.ref_name }}"
+          # Strip the 'v' prefix for standard numeric versioning (e.g., v1.0.0 -> 1.0.0)
+          $cleanVersion = $tag -replace '^v', ''
+          
+          $folderName = "HSRFPSUnlocker-$tag"
+          $exeName = "HSRFPSUnlocker.exe"
+          $zipName = "HSRFPSUnlocker-$tag.zip"
+          
+          # Create target directory structure
+          New-Item -ItemType Directory -Path ".\$folderName" -Force
+
+          ps2exe -inputFile ".\HSRFPSUnlocker.ps1" `
+           -outputFile ".\$folderName\$exeName" `
+           -copyright "Copyright (c) 2026 ${{ github.repository_owner }}" `
+           -iconFile ".\HSRFPSUnlocker.ico" `
+           -x64 `
+           -requireAdmin `
+           -noOutput `
+           -noError `
+           -description "Unlock 120 FPS for Honkai: Star Rail" `
+           -title "HSR FPS Unlocker" `
+           -version "$cleanVersion" `
+           -product "HSR FPS Unlocker" `
+           -company "${{ github.repository_owner }}"
+
+          # Compress the folder into a zip file preserving the root folder structure
+          Compress-Archive -Path ".\$folderName" -DestinationPath ".\$zipName" -Force
+
+          # Save archive name to environment file for subsequent steps
+          echo "ZIP_NAME=$zipName" >> $env:GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ZIP_NAME }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
